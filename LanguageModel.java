@@ -33,15 +33,21 @@ public class LanguageModel {
 
     /** Builds a language model from the text in the given file (the corpus). */
 	public void train(String fileName) {
-		String window = "";
+String window = "";
         char c;
-        In in = new In(fileName);
+        In in = new In(fileName);        
         for (int i = 0; i < windowLength; i++) {
-            window += in.readChar();
+            c = in.readChar();
+            while (c == '\r' && !in.isEmpty()) {
+                c = in.readChar();
+            }
+            window += c;
         }
-
         while (!in.isEmpty()) {
             c = in.readChar();
+            if (c == '\r') {
+                continue;
+            }
             List probs = CharDataMap.get(window);
             if (probs == null) {
                 probs = new List();
@@ -80,7 +86,7 @@ public class LanguageModel {
         ListIterator iterator = probs.listIterator(0);
         while (iterator.hasNext()) {
             CharData cd = iterator.next();
-            if (rand <= cd.cp) {
+            if (rand < cd.cp) {
                 return cd.chr;
             }
         }
@@ -100,15 +106,13 @@ public class LanguageModel {
         }
         String result = initialText;
         String window = initialText.substring(initialText.length() - windowLength);
-        int currentTextLength = 0;
-        while (currentTextLength < textLength) {
+        while (result.length() < (initialText.length() + textLength)) {
             List probs = CharDataMap.get(window);
             if (probs == null) {
                 break;
             }
             char c = getRandomChar(probs);
             result += c;
-            currentTextLength++;
             window = window.substring(1) + c;
         }
         return result;
